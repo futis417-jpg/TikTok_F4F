@@ -1,0 +1,25 @@
+name: Bombardeo F4F - 15 Videos
+on:
+  schedule:
+    # Se ejecuta en minutos aleatorios para parecer humano
+    - cron: '0 0,2,3,5,6,8,9,11,12,14,15,17,18,20,21 * * *'
+  workflow_dispatch: # Botón para subir uno AHORA
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Instalar dependencias
+        run: |
+          pip install tiktok-uploader gdown
+          sudo apt-get install -y chromium-browser
+      - name: Ejecutar Subida
+        env:
+          TIKTOK_COOKIES: ${{ secrets.TIKTOK_COOKIES }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+        run: python main.py
