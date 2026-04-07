@@ -2,3 +2,4 @@ tiktok-uploader
 gdown
 moviepy<2.0.0
 proglog
+playwright
