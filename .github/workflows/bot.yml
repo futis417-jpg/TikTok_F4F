@@ -1,0 +1,27 @@
+name: Bombardeo TikTok F4F
+on:
+  schedule:
+    # Se ejecuta cada 95 minutos aproximadamente para llegar a 15 diarios
+    - cron: '0 */1 * * *'
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Instalar FFmpeg y Browser
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg chromium-browser
+      - name: Instalar dependencias
+        run: pip install tiktok-uploader gdown moviepy
+      - name: Ejecutar Bot
+        env:
+          TIKTOK_COOKIES: ${{ secrets.TIKTOK_COOKIES }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+        run: python main.py
