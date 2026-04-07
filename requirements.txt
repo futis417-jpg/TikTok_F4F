@@ -1,3 +1,4 @@
 tiktok-uploader
 gdown
-moviepy
+moviepy<2.0.0
+proglog
