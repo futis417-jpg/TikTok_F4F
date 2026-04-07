@@ -2,8 +2,9 @@ name: Bombardeo TikTok F4F
 
 on:
   workflow_dispatch:
+  # Se ejecuta automáticamente cada 6 horas
   schedule:
-    - cron: '0 */6 * * *' # Se ejecuta cada 6 horas, puedes cambiarlo
+    - cron: '0 */6 * * *'
 
 jobs:
   upload:
@@ -20,16 +21,28 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
+          sudo apt-get update
           sudo apt-get install -y xvfb
 
       - name: Crear archivo de cookies
+        shell: bash
         run: |
-          echo '${{ secrets.TIKTOK_COOKIES }}' > cookies.json
-        # Esto crea un archivo físico que el script sí puede leer
+          # Usamos un método blindado para que no se pierda ni un carácter
+          cat << 'EOF' > cookies.json
+          ${{ secrets.TIKTOK_COOKIES }}
+          EOF
+          
+          # Verificación rápida (no muestra el contenido por seguridad, solo si existe)
+          if [ -s cookies.json ]; then
+            echo "✅ Archivo de cookies creado correctamente."
+          else
+            echo "❌ ERROR: El archivo de cookies está vacío. Revisa tus GitHub Secrets."
+            exit 1
+          fi
 
       - name: Ejecutar Bot
         run: xvfb-run python main.py
         env:
-          pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+          # IMPORTANTE: Aquí le decimos al script que lea el ARCHIVO que acabamos de crear
           TIKTOK_COOKIES: cookies.json
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
