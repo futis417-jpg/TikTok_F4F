@@ -1,34 +1,35 @@
 name: Bombardeo TikTok F4F
+
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 */1 * * *' # Se ejecuta cada hora
-  workflow_dispatch: # Botón manual
+    - cron: '0 */6 * * *' # Se ejecuta cada 6 horas, puedes cambiarlo
 
 jobs:
   upload:
     runs-on: ubuntu-latest
     steps:
-      - name: Copiar repositorio
-        uses: actions/checkout@v4
-      
-      - name: Instalar Python 3.10
-        uses: actions/setup-python@v5
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          
-      - name: Instalar Herramientas Pro
+
+      - name: Instalar dependencias
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg xvfb
-          
-      - name: Instalar librerías y Navegador
+          pip install -r requirements.txt
+          sudo apt-get install -y xvfb
+
+      - name: Crear archivo de cookies
         run: |
-          python -m pip install --upgrade pip
-          pip install tiktok-uploader gdown "moviepy<2.0.0" proglog playwright
-          playwright install chromium --with-deps
-          
-      - name: 🚀 EJECUTAR BOT
-        env:
-          TIKTOK_COOKIES: ${{ secrets.TIKTOK_COOKIES }}
-          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+          echo '${{ secrets.TIKTOK_COOKIES }}' > cookies.json
+        # Esto crea un archivo físico que el script sí puede leer
+
+      - name: Ejecutar Bot
         run: xvfb-run python main.py
+        env:
+          pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+          TIKTOK_COOKIES: cookies.json
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
