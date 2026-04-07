@@ -1,16 +1,24 @@
 import os
+import json
 import random
 import gdown
 from tiktok_uploader.upload import upload_video
 from moviepy.editor import ImageClip, AudioFileClip
 
-# 1. Configurar Cookies desde los Secrets de GitHub
-cookies_data = os.getenv('TIKTOK_COOKIES')
-if cookies_data:
-    with open('cookies.json', 'w') as f:
-        f.write(cookies_data)
+# 1. Cargar Cookies de forma segura
+def obtener_cookies():
+    cookies_raw = os.getenv('TIKTOK_COOKIES')
+    if not cookies_raw:
+        print("❌ ERROR: No se encontró el Secret TIKTOK_COOKIES en GitHub.")
+        return None
+    try:
+        # Intentamos cargar el JSON directamente
+        return json.loads(cookies_raw)
+    except Exception as e:
+        print(f"❌ ERROR al leer las cookies: {e}")
+        return None
 
-# 2. Descargar y buscar material en Drive (El Sabueso)
+# 2. Descargar material (El Sabueso)
 def preparar_material():
     folder_id = os.getenv('DRIVE_FOLDER_ID')
     url = f'https://drive.google.com/drive/folders/{folder_id}'
@@ -22,10 +30,8 @@ def preparar_material():
         print(f"❌ Error al descargar de Drive: {e}")
         return None
     
-    # Buscamos archivos en todas las carpetas bajadas
-    formatos = ('.mp4', '.mov', '.jpg', '.png', '.jpeg', '.heic')
+    formatos = ('.mp4', '.mov', '.jpg', '.png', '.jpeg')
     archivos_encontrados = []
-    
     for root, dirs, files in os.walk("."):
         if ".github" in root or ".git" in root: continue
         for name in files:
@@ -40,16 +46,15 @@ def preparar_material():
     print(f"🎯 OBJETIVO: {seleccionado}")
     return seleccionado
 
-# 3. Convertir imagen a vídeo con música
+# 3. Convertir imagen a vídeo
 def procesar_archivo(ruta):
     if ruta.lower().endswith(('.mp4', '.mov')):
         return ruta
     
     print(f"🎬 Creando vídeo de 7s con música...")
     video_path = "temp_video.mp4"
-    
     if not os.path.exists("music.mp3"):
-        print("❌ ERROR: No has subido 'music.mp3' a GitHub.")
+        print("❌ ERROR: Sube 'music.mp3' a tu repositorio de GitHub.")
         return None
         
     try:
@@ -66,6 +71,10 @@ def procesar_archivo(ruta):
 
 # 4. El Lanzamiento
 def start():
+    # Primero cargamos las cookies
+    cookies_list = obtener_cookies()
+    if not cookies_list: return
+
     archivo = preparar_material()
     if not archivo: return
     
@@ -80,14 +89,15 @@ def start():
 
     print("🚀 LANZANDO A TIKTOK...")
     try:
+        # Pasamos las cookies como una LISTA directamente
         upload_video(
             final_file,
             description=random.choice(frases),
-            cookies='cookies.json',
+            cookies=cookies_list, # <--- CAMBIO CLAVE AQUÍ
             browser='chromium',
-            headless=True # Modo oculto para el servidor
+            headless=True
         )
-        print("🔥 ¡MISIÓN CUMPLIDA!")
+        print("🔥 ¡MISIÓN CUMPLIDA! Mira tu perfil.")
     except Exception as e:
         print(f"❌ Fallo en TikTok: {e}")
 
